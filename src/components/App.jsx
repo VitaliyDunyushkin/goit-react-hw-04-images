@@ -6,11 +6,11 @@ export const App = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        fontSize: 40,
-        color: '#010101'
+        fontSize: 150,
+        color: '#010101',
       }}
     >
-      React homework template
+      Images finder
     </div>
   );
 };
