@@ -1,43 +1,40 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { AiOutlineSearch } from 'react-icons/ai';
 import PropTypes from 'prop-types';
 
 import css from './Searchbar.module.css';
 
-export default class Searchbar extends Component {
-  state = { searchText: '' };
+export default function Searchbar({ onSearch }) {
+  const [searchText, setSearchText] = useState('');
 
-  handleChange = event => {
-    const { value } = event.target;
-    this.setState({ searchText: value });
+  const handleChange = event => {
+    setSearchText(event.target.value);
   };
 
-  handleSubmit = event => {
+  const handleSubmit = event => {
     event.preventDefault();
-    this.props.onSearch(this.state.searchText);
+    onSearch(searchText);
   };
 
-  render() {
-    return (
-      <header className={css.searchbar}>
-        <form className={css.searchForm} onSubmit={this.handleSubmit}>
-          <button type="submit" className={css.searchFormButton}>
-            <span className={css.searchFormButtonLabel111}>
-              <AiOutlineSearch />
-            </span>
-          </button>
+  return (
+    <header className={css.searchbar}>
+      <form className={css.searchForm} onSubmit={handleSubmit}>
+        <button type="submit" className={css.searchFormButton}>
+          <span className={css.searchFormButtonLabel111}>
+            <AiOutlineSearch />
+          </span>
+        </button>
 
-          <input
-            className={css.searchFormInput}
-            type="text"
-            name="searchText"
-            onChange={this.handleChange}
-            placeholder="Search images and photos"
-          />
-        </form>
-      </header>
-    );
-  }
+        <input
+          className={css.searchFormInput}
+          type="text"
+          name="searchText"
+          onChange={handleChange}
+          placeholder="Search images and photos"
+        />
+      </form>
+    </header>
+  );
 }
 
 Searchbar.propTypes = { onSearch: PropTypes.func.isRequired };

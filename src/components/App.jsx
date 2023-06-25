@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
@@ -14,125 +14,110 @@ const STATUS = {
   REJECTED: 'rejected',
 };
 
-export class App extends Component {
-  state = {
-    status: STATUS.IDLE,
-    searchText: '',
-    query: [],
-    page: 1,
-    photosOnPage: 12,
-    error: '',
-    isShowModal: false,
-    isShowButton: false,
-    photoForModal: { largeImageURL: '', title: '', id: '' },
+export function App() {
+  const [rendStatus, setStatus] = useState(STATUS.IDLE);
+  const [searchText, setSearchText] = useState('');
+  const [query, setQuery] = useState([]);
+  const [page, setPage] = useState(1);
+  const [photosOnPage, setPhotosOnPage] = useState(12);
+  const [error, setError] = useState('');
+  const [isShowModal, setIsShowModal] = useState(false);
+  const [isShowButton, setIsShowButton] = useState(false);
+  const [photoForModal, setPhotoForModal] = useState({
+    largeImageURL: '',
+    title: '',
+    id: '',
+  });
+
+  const handleSearch = value => {
+    setSearchText(value);
+    setQuery([]);
+    setPage(1);
+    setError('');
+    setIsShowModal(false);
+    setIsShowButton(false);
+    setPhotoForModal({ largeImageURL: '', title: '', id: '' });
   };
 
-  handleSearch = value => {
-    this.setState({
-      searchText: value,
-      query: [],
-      page: 1,
-      error: '',
-      isShowModal: false,
-      isShowButton: false,
-      photoForModal: { largeImageURL: '', title: '', id: '' },
-    });
+  const handleButton = () => {
+    setPage(prev => prev + 1);
   };
 
-  handleButton = id => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const openModal = (urlForModal, title, id) => {
+    setIsShowModal(true);
+    setPhotoForModal({ largeImageURL: urlForModal, title: title, id: id });
   };
 
-  openModal = (urlForModal, title, id) => {
-    this.setState({
-      isShowModal: true,
-      photoForModal: { largeImageURL: urlForModal, title: title, id: id },
-    });
+  const closeModal = () => {
+    setIsShowModal(false);
+    setPhotoForModal({ largeImageURL: '', title: '', id: '' });
   };
 
-  closeModal = () => {
-    this.setState({
-      isShowModal: false,
-      photoForModal: { largeImageURL: '', title: '', id: '' },
-    });
-  };
-
-  componentDidUpdate(prevProps, prevState) {
-    const { searchText, page } = this.state;
-
-    if (searchText !== prevState.searchText || page !== prevState.page) {
-      this.setState({ status: STATUS.PENDING });
-      this.fetchPhotos();
-    }
-  }
-
-  fetchPhotos = async () => {
-    const { searchText, page, photosOnPage } = this.state;
+  const fetchPhotos = async () => {
     await getPhotos(searchText, page)
       .then(data => {
         if (data.totalHits === 0) {
-          return this.setState({
-            error: 'No matches found',
-            status: STATUS.REJECTED,
-          });
+          setError('No matches found');
+          setStatus(STATUS.REJECTED);
         }
 
         if (page * photosOnPage < data.totalHits) {
-          this.setState({ isShowButton: true });
+          setIsShowButton(true);
         } else {
-          this.setState({ isShowButton: false });
+          setIsShowButton(false);
         }
 
-        this.setState(prevState => ({
-          query: [...prevState.query, ...data.hits],
-          status: STATUS.RESOLVED,
-        }));
+        setQuery(prev => [...prev, ...data.hits]);
+        setStatus(STATUS.RESOLVED);
       })
       .catch(error => {
-        this.setState({ error, status: STATUS.REJECTED });
+        setError(error);
+        setStatus(STATUS.REJECTED);
       });
   };
 
-  render() {
-    const { query, isShowModal, isShowButton, photoForModal, status, error } =
-      this.state;
-
-    if (status === STATUS.IDLE) {
-      return <Searchbar onSearch={this.handleSearch} />;
+  useEffect(() => {
+    if (searchText === '') {
+      return;
     }
 
-    if (status === STATUS.PENDING) {
-      return (
-        <>
-          <Searchbar onSearch={this.handleSearch} />
-          <ImageGallery gallery={query} onClick={this.openModal} />
-          <Loader />;
-        </>
-      );
-    }
+    fetchPhotos();
+    setStatus(STATUS.PENDING);
+  }, [searchText, page]);
 
-    if (status === STATUS.RESOLVED) {
-      return (
-        <>
-          <Searchbar onSearch={this.handleSearch} />
-          <ImageGallery gallery={query} onClick={this.openModal} />
-          {isShowButton && <Button handleButton={this.handleButton} />}
-          {isShowModal && (
-            <Modal onClick={this.closeModal} modalContent={photoForModal} />
-          )}
-        </>
-      );
-    }
+  if (rendStatus === STATUS.IDLE) {
+    return <Searchbar onSearch={handleSearch} />;
+  }
 
-    if (status === STATUS.REJECTED) {
-      return (
-        <>
-          <Searchbar onSearch={this.handleSearch} />
-          <h1>{error}</h1>
-        </>
-      );
-    }
+  if (rendStatus === STATUS.PENDING) {
+    return (
+      <>
+        <Searchbar onSearch={handleSearch} />
+        <ImageGallery gallery={query} onClick={openModal} />
+        <Loader />;
+      </>
+    );
+  }
+
+  if (rendStatus === STATUS.RESOLVED) {
+    return (
+      <>
+        <Searchbar onSearch={handleSearch} />
+        <ImageGallery gallery={query} onClick={openModal} />
+        {isShowButton && <Button handleButton={handleButton} />}
+        {isShowModal && (
+          <Modal onClick={closeModal} modalContent={photoForModal} />
+        )}
+      </>
+    );
+  }
+
+  if (rendStatus === STATUS.REJECTED) {
+    return (
+      <>
+        <Searchbar onSearch={handleSearch} />
+        <h1>{error}</h1>
+      </>
+    );
   }
 }
