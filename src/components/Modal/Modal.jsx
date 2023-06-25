@@ -13,6 +13,7 @@ export default function Modal({ onClick, modalContent }) {
     return () => {
       window.removeEventListener('keydown', handlePressESC);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const { largeImageURL, title, id } = modalContent;

@@ -19,7 +19,7 @@ export function App() {
   const [searchText, setSearchText] = useState('');
   const [query, setQuery] = useState([]);
   const [page, setPage] = useState(1);
-  const [photosOnPage, setPhotosOnPage] = useState(12);
+  const [photosOnPage] = useState(12);
   const [error, setError] = useState('');
   const [isShowModal, setIsShowModal] = useState(false);
   const [isShowButton, setIsShowButton] = useState(false);
@@ -53,37 +53,37 @@ export function App() {
     setPhotoForModal({ largeImageURL: '', title: '', id: '' });
   };
 
-  const fetchPhotos = async () => {
-    await getPhotos(searchText, page)
-      .then(data => {
-        if (data.totalHits === 0) {
-          setError('No matches found');
-          setStatus(STATUS.REJECTED);
-        }
-
-        if (page * photosOnPage < data.totalHits) {
-          setIsShowButton(true);
-        } else {
-          setIsShowButton(false);
-        }
-
-        setQuery(prev => [...prev, ...data.hits]);
-        setStatus(STATUS.RESOLVED);
-      })
-      .catch(error => {
-        setError(error);
-        setStatus(STATUS.REJECTED);
-      });
-  };
-
   useEffect(() => {
+    const fetchPhotos = async () => {
+      await getPhotos(searchText, page)
+        .then(data => {
+          if (data.totalHits === 0) {
+            setError('No matches found');
+            setStatus(STATUS.REJECTED);
+          }
+
+          if (page * photosOnPage < data.totalHits) {
+            setIsShowButton(true);
+          } else {
+            setIsShowButton(false);
+          }
+
+          setQuery(prev => [...prev, ...data.hits]);
+          setStatus(STATUS.RESOLVED);
+        })
+        .catch(error => {
+          setError(error);
+          setStatus(STATUS.REJECTED);
+        });
+    };
+
     if (searchText === '') {
       return;
     }
 
     fetchPhotos();
     setStatus(STATUS.PENDING);
-  }, [searchText, page]);
+  }, [searchText, page, photosOnPage]);
 
   if (rendStatus === STATUS.IDLE) {
     return <Searchbar onSearch={handleSearch} />;
